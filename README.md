@@ -6,19 +6,19 @@ An AI-powered web application that detects space debris from images and videos u
 
 ## 📌 Project Overview
 
-Space debris poses a serious threat to satellites and space missions. This project uses deep learning to detect debris objects in space images and provides insights like risk level, object count, and visualization.
+Space debris is a growing threat to satellites and space missions. This project uses deep learning to automatically detect debris objects and analyze their potential risk.
 
 ---
 
 ## 🎯 Features
 
-* 🔍 Real-time debris detection (Image & Video)
-* 🧠 YOLO-based deep learning model
-* 📊 Detection count & risk analysis
-* 📈 Graph visualization of results
-* 🎥 Upload image/video support
-* 🌐 Streamlit interactive UI dashboard
-* ⚡ Fast and lightweight deployment
+* 🔍 Image & video debris detection
+* 🧠 YOLOv8 deep learning model
+* 📊 Debris count & risk analysis
+* 📈 Graph visualization
+* 🎥 Upload support (image/video)
+* 🌐 Interactive Streamlit UI
+* ⚡ Fast & lightweight
 
 ---
 
@@ -35,49 +35,48 @@ Space debris poses a serious threat to satellites and space missions. This proje
 
 ## 📂 Project Structure
 
-```
-SpaceDebris Project/
+```bash
+space-debris-detection/
 │
-├── app.py                # Main Streamlit application
-├── best.pt               # Trained YOLO model
-├── requirements.txt      # Dependencies
-├── runtime.txt           # Python version (for deployment)
-├── dataset/              # (Optional) Training dataset
-└── README.md             # Project documentation
+├── app.py
+├── best.pt
+├── requirements.txt
+├── runtime.txt
+├── dataset/ (optional)
+└── README.md
 ```
 
 ---
 
 ## 📊 How It Works
 
-1. User uploads an image or video
-2. YOLO model processes the input
-3. Detects space debris objects
-4. Displays:
+1. Upload image or video
+2. Model processes input
+3. Detects debris using YOLO
+4. Shows:
 
    * Bounding boxes
    * Confidence score
    * Total debris count
-   * Risk level (Low / Medium / High)
+   * Risk level
 
 ---
 
 ## ⚠️ Risk Level Logic
 
-| Debris Count | Risk Level |
-| ------------ | ---------- |
-| 0 - 2        | Low 🟢     |
-| 3 - 5        | Medium 🟡  |
-| 6+           | High 🔴    |
+| Count | Risk      |
+| ----- | --------- |
+| 0–2   | Low 🟢    |
+| 3–5   | Medium 🟡 |
+| 6+    | High 🔴   |
 
 ---
 
-## 📥 Installation (Local Setup)
+## 📥 Installation
 
 ```bash
-git clone https://github.com/your-username/space-debris-detection.git
+git clone https://github.com/VK241105/space-debris-detection.git
 cd space-debris-detection
-
 pip install -r requirements.txt
 streamlit run app.py
 ```
@@ -86,69 +85,46 @@ streamlit run app.py
 
 ## 🌐 Deployment
 
-This project is deployed using Streamlit Cloud.
-
-Steps:
+Deployed using Streamlit Cloud:
 
 1. Upload code to GitHub
-2. Connect repository to Streamlit Cloud
-3. Add `requirements.txt` and `runtime.txt`
+2. Connect repo to Streamlit Cloud
+3. Add requirements.txt & runtime.txt
 4. Deploy 🚀
 
 ---
 
 ## 📁 Dataset
 
-* Dataset used for training can be taken from Kaggle or custom collected images.
-* Images are labeled in YOLO format.
+* Dataset sourced from Kaggle / custom images
+* Annotated in YOLO format
 
 ---
 
 ## 🤖 Model Training
 
-* YOLOv8 model used from Ultralytics
-* Custom dataset trained for debris detection
-* Trained for multiple epochs to improve accuracy
+* YOLOv8 (Ultralytics)
+* Trained on custom debris dataset
+* Multiple epochs for accuracy
 
 ---
 
-## 📸 Output Example
+## 🔮 Future Scope
 
-* Bounding boxes around debris
-* Confidence scores
-* Risk analysis graph
-
----
-
-## 🔮 Future Enhancements
-
-* 🔴 Real-time satellite tracking
-* 🛰️ Live space debris monitoring
-* 📡 API integration with space agencies
-* 🤖 AI-based prediction of collision risk
+* 🛰️ Real-time debris tracking
+* 📡 Satellite integration
+* 🤖 Collision prediction AI
+* 🌍 Live monitoring dashboard
 
 ---
 
 ## 👩‍💻 Author
 
-Vaishnavi Mane
-BTech CSE (AI & ML)
+**Vaishnavi Mane**
+GitHub: https://github.com/VK241105
 
 ---
 
-## ⭐ Acknowledgment
+## ⭐ Support
 
-* Ultralytics YOLO
-* Open-source datasets
-* Streamlit for UI
-
----
-
-## 📌 Note
-
-This project is for educational and research purposes.
-
----
-
-⭐ If you like this project, give it a star on GitHub!
-
+If you like this project, give it a ⭐ on GitHub!
