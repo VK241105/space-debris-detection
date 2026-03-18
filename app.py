@@ -3,13 +3,7 @@ import os
 
 # Fix OpenCV issue
 os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
-
-try:
-    import cv2
-except ImportError:
-    os.system("pip install opencv-python-headless")
-    import cv2
-
+import cv2
 import numpy as np
 from ultralytics import YOLO
 from PIL import Image
