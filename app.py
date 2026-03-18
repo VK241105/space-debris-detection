@@ -1,7 +1,12 @@
 import streamlit as st
 import os
 os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
-import cv2
+try:
+    import cv2
+except ImportError:
+    import os
+    os.system("pip install opencv-python-headless")
+    import cv2
 import numpy as np
 from ultralytics import YOLO
 from PIL import Image
