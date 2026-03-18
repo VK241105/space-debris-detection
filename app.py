@@ -3,6 +3,7 @@ import os
 
 # Fix OpenCV issue
 os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
+
 import cv2
 import numpy as np
 from ultralytics import YOLO
@@ -11,6 +12,7 @@ import pandas as pd
 import io
 import gdown
 import matplotlib.pyplot as plt
+import time
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Space Debris Detection", layout="wide")
@@ -61,6 +63,7 @@ if mode == "Image Upload":
         count = 0
         total_conf = 0
         boxes_list = []
+        centers_draw = []
 
         for r in results:
             for box in r.boxes:
@@ -77,11 +80,27 @@ if mode == "Image Upload":
                 cv2.putText(img, label, (x1, y1-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
 
+                # Center point
+                cx = int((x1 + x2) / 2)
+                cy = int((y1 + y2) / 2)
+                centers_draw.append((cx, cy))
+                cv2.circle(img, (cx, cy), 4, (255, 0, 0), -1)
+
                 # Large object warning
                 area = (x2 - x1) * (y2 - y1)
                 if area > 50000:
                     cv2.putText(img, "LARGE OBJECT!", (x1, y1-30),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+
+        # ------------------ DRAW COLLISION LINES ------------------
+        for i in range(len(centers_draw)):
+            for j in range(i+1, len(centers_draw)):
+                dist = np.sqrt(
+                    (centers_draw[i][0] - centers_draw[j][0])**2 +
+                    (centers_draw[i][1] - centers_draw[j][1])**2
+                )
+                if dist < 100:
+                    cv2.line(img, centers_draw[i], centers_draw[j], (0,0,255), 2)
 
         with col2:
             st.subheader("🛰️ Detection Result")
@@ -89,6 +108,16 @@ if mode == "Image Upload":
 
         # ------------------ METRICS ------------------
         st.metric("Detected Objects", count)
+
+        avg_conf = total_conf / count if count > 0 else 0
+        st.write(f"🎯 Average Confidence: {avg_conf:.2f}")
+
+        # ------------------ TOTAL AREA ------------------
+        total_area = 0
+        for (x1, y1, x2, y2) in boxes_list:
+            total_area += (x2 - x1) * (y2 - y1)
+
+        st.write(f"📦 Total Debris Area: {total_area}")
 
         # ------------------ RISK SYSTEM ------------------
         def get_risk(count):
@@ -179,11 +208,15 @@ elif mode == "Webcam":
 
     st.subheader("🎥 Live Webcam Detection")
 
-    if st.button("Start Webcam"):
+    run = st.checkbox("Start Webcam")
+
+    if run:
         cap = cv2.VideoCapture(0)
         frame_placeholder = st.empty()
 
-        while cap.isOpened():
+        prev_time = 0
+
+        while run:
             ret, frame = cap.read()
             if not ret:
                 st.error("❌ Webcam not working")
@@ -195,6 +228,14 @@ elif mode == "Webcam":
                 for box in r.boxes:
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
                     cv2.rectangle(frame, (x1,y1), (x2,y2), (0,255,0), 2)
+
+            # FPS
+            current_time = time.time()
+            fps = 1 / (current_time - prev_time) if prev_time != 0 else 0
+            prev_time = current_time
+
+            cv2.putText(frame, f"FPS: {int(fps)}", (10,30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,255), 2)
 
             frame_placeholder.image(frame, channels="BGR")
 
