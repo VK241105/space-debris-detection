@@ -1,32 +1,32 @@
 import streamlit as st
 import os
+
+# Fix OpenCV issue
 os.environ["OPENCV_VIDEOIO_PRIORITY_MSMF"] = "0"
+
 try:
     import cv2
 except ImportError:
-    import os
     os.system("pip install opencv-python-headless")
     import cv2
+
 import numpy as np
 from ultralytics import YOLO
 from PIL import Image
 import pandas as pd
 import io
-import os
-import urllib.request
 import gdown
+import matplotlib.pyplot as plt
 
 # ------------------ PAGE CONFIG ------------------
 st.set_page_config(page_title="Space Debris Detection", layout="wide")
-import os
-import gdown
 
+# ------------------ MODEL DOWNLOAD ------------------
 file_id = "1kQTZ1ItERBwKRd1bbip8Cc-5BZfdDcsY"
 
-# ALWAYS download fresh file (overwrite)
-gdown.download(id=file_id, output="best.pt", quiet=False, fuzzy=True)
+if not os.path.exists("best.pt"):
+    gdown.download(id=file_id, output="best.pt", quiet=False)
 
-from ultralytics import YOLO
 model = YOLO("best.pt")
 
 # ------------------ SIDEBAR ------------------
@@ -66,6 +66,7 @@ if mode == "Image Upload":
 
         count = 0
         total_conf = 0
+        boxes_list = []
 
         for r in results:
             for box in r.boxes:
@@ -74,16 +75,15 @@ if mode == "Image Upload":
                 total_conf += conf_score
 
                 x1, y1, x2, y2 = map(int, box.xyxy[0])
+                boxes_list.append((x1, y1, x2, y2))
 
-                # Draw bounding box
+                # Draw box
                 cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
-
-                # Label with confidence
                 label = f"Debris {conf_score:.2f}"
                 cv2.putText(img, label, (x1, y1-10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0), 2)
 
-                # Size detection (advanced feature)
+                # Large object warning
                 area = (x2 - x1) * (y2 - y1)
                 if area > 50000:
                     cv2.putText(img, "LARGE OBJECT!", (x1, y1-30),
@@ -97,35 +97,87 @@ if mode == "Image Upload":
         st.metric("Detected Objects", count)
 
         # ------------------ RISK SYSTEM ------------------
-        avg_conf = total_conf / count if count > 0 else 0
+        def get_risk(count):
+            if count <= 2:
+                return "Low 🟢"
+            elif count <= 5:
+                return "Medium 🟡"
+            else:
+                return "High 🔴"
 
-        if count == 0:
-            st.success("🟢 Low Risk: No debris detected")
-        elif count <= 3 and avg_conf < 0.6:
-            st.warning("🟡 Medium Risk: Moderate debris")
+        risk_level = get_risk(count)
+
+        # ------------------ COLLISION PREDICTION ------------------
+        def collision_risk_calc(boxes):
+            if len(boxes) < 2:
+                return "Low 🟢", 0
+
+            centers = []
+            for b in boxes:
+                x1, y1, x2, y2 = b
+                cx = (x1 + x2) / 2
+                cy = (y1 + y2) / 2
+                centers.append((cx, cy))
+
+            min_dist = float('inf')
+
+            for i in range(len(centers)):
+                for j in range(i+1, len(centers)):
+                    dist = np.sqrt(
+                        (centers[i][0] - centers[j][0])**2 +
+                        (centers[i][1] - centers[j][1])**2
+                    )
+                    min_dist = min(min_dist, dist)
+
+            if min_dist < 50:
+                return "High 🔴", min_dist
+            elif min_dist < 100:
+                return "Medium 🟡", min_dist
+            else:
+                return "Low 🟢", min_dist
+
+        collision_level, min_distance = collision_risk_calc(boxes_list)
+
+        # ------------------ DISPLAY ------------------
+        st.subheader("🚨 Risk Analysis")
+        st.write(f"⚠️ Debris Risk Level: {risk_level}")
+        st.write(f"🚨 Collision Risk: {collision_level}")
+        st.write(f"📏 Min Distance: {min_distance:.2f}")
+
+        if collision_level == "High 🔴":
+            st.error("⚠️ High Collision Risk!")
+        elif collision_level == "Medium 🟡":
+            st.warning("⚠️ Moderate Collision Risk")
         else:
-            st.error("🔴 High Risk: Dangerous debris level!")
+            st.success("✅ Safe Zone")
 
         # ------------------ HISTORY ------------------
         st.session_state.history.append(count)
 
-        # ------------------ LINE GRAPH ------------------
         st.subheader("📈 Detection Trend")
         st.line_chart(st.session_state.history)
 
         # ------------------ BAR GRAPH ------------------
         data = {
-            "Category": ["Detected", "Safe Zone"],
+            "Category": ["Detected", "Safe"],
             "Count": [count, max(10 - count, 0)]
         }
         df = pd.DataFrame(data)
         st.subheader("📊 Detection Analytics")
         st.bar_chart(df.set_index("Category"))
 
-        # ------------------ DOWNLOAD RESULT ------------------
+        # ------------------ ADVANCED GRAPH ------------------
+        st.subheader("📊 Advanced Analytics")
+        labels = ["Debris Count", "Distance"]
+        values = [count, min_distance]
+
+        fig, ax = plt.subplots()
+        ax.bar(labels, values)
+        st.pyplot(fig)
+
+        # ------------------ DOWNLOAD ------------------
         buf = io.BytesIO()
         Image.fromarray(cv2.cvtColor(img, cv2.COLOR_BGR2RGB)).save(buf, format="PNG")
-
         st.download_button("📥 Download Result", buf.getvalue(), "result.png")
 
 # ------------------ WEBCAM MODE ------------------
@@ -145,13 +197,9 @@ elif mode == "Webcam":
 
             results = model(frame, conf=confidence)
 
-            count = 0
-
             for r in results:
                 for box in r.boxes:
-                    count += 1
                     x1, y1, x2, y2 = map(int, box.xyxy[0])
-
                     cv2.rectangle(frame, (x1,y1), (x2,y2), (0,255,0), 2)
 
             frame_placeholder.image(frame, channels="BGR")
