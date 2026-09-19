@@ -92,6 +92,10 @@ Deployed using Streamlit Cloud:
 3. Add requirements.txt & runtime.txt
 4. Deploy 🚀
 
+The application is deployed using **Streamlit Community Cloud**.
+
+🚀 **Live Application:**  
+[Open Space Debris Detection App](https://space-debris-detection.streamlit.app)
 ---
 
 ## 📁 Dataset
